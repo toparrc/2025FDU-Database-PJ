@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新闻删除模块</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f1f1f1;
+    }
+
+    header {
+      background-color: #3A99D8;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px 0 0 6px;
+    }
+
+    .search-box button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3A99D8;
+      color: white;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .search-box button:hover {
+      background-color: #67B4E3;
+    }
+
+    .news-item {
+      border-left: 4px solid #3A99D8;
+      background-color: #fefefe;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .news-item p {
+      margin: 6px 0;
+      color: #333;
+    }
+
+    .news-item button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #3A99D8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .news-item button:hover {
+      background-color: #67B4E3;
+    }
+
+    .floating-nav {
+      position: fixed;
+      bottom: 40px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      background-color: rgba(255, 255, 255, 0.6); 
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      backdrop-filter: blur(4px); 
+    }
+
+    .floating-nav a {
+      text-decoration: none;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .floating-nav a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .search-box {
+        flex-direction: column;
+      }
+      .search-box input {
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+      .search-box button {
+        border-radius: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>新闻删除模块（数据库搜索）</header>
+
+  <div class="container">
+    <div class="search-box">
+      <input type="text" id="searchKeyword" placeholder="请输入关键词搜索数据库新闻..." />
+      <button onclick="searchNews()">搜索</button>
+    </div>
+
+    <div id="resultsContainer">
+      <p style="text-align: center; color: #999;">请先输入关键词并点击“搜索”</p>
+    </div>
+  </div>
+
+  <div class="floating-nav">
+    <a href="/" title="首页">🏠 首页</a>
+    <a href="/search.html" title="新增">✏️ 新增</a>
+    <a href="/select.html" title="查询">🔍 查询</a>
+    <a href="/advanced_search.html" title="高级查询">📊 高级</a>
+  </div>
+
+  <script>
+    let currentNewsList = [];
+
+    function searchNews() {
+      const keyword = document.getElementById('searchKeyword').value.trim();
+      if (!keyword) {
+        alert('请输入关键词');
+        return;
+      }
+
+      const resultsContainer = document.getElementById('resultsContainer');
+      resultsContainer.innerHTML = '<p style="text-align: center; color: #999;">正在搜索...</p>'; 
+
+      fetch('/api/search?keyword=' + encodeURIComponent(keyword))
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(newsList => {
+          currentNewsList = newsList; 
+          resultsContainer.innerHTML = '';
+
+          if (newsList.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #999;">未找到相关内容。</p>';
+            return;
+          }
+
+          const bulkDeleteBtn = document.createElement('button');
+          bulkDeleteBtn.textContent = '一键删除所有搜索结果';
+          bulkDeleteBtn.style.marginBottom = '15px';
+          bulkDeleteBtn.style.padding = '10px 20px';
+          bulkDeleteBtn.style.backgroundColor = '#ff4d4f';
+          bulkDeleteBtn.style.color = 'white';
+          bulkDeleteBtn.style.border = 'none';
+          bulkDeleteBtn.style.borderRadius = '6px';
+          bulkDeleteBtn.style.cursor = 'pointer';
+          bulkDeleteBtn.style.transition = 'background-color 0.2s';
+          bulkDeleteBtn.onmouseover = () => bulkDeleteBtn.style.backgroundColor = '#cc0000';
+          bulkDeleteBtn.onmouseout = () => bulkDeleteBtn.style.backgroundColor = '#ff4d4f';
+          bulkDeleteBtn.onclick = () => {
+            if (!confirm('你确定要删除所有搜索结果吗？操作不可恢复！')) return;
+
+            fetch('/api/delete/bulk', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(currentNewsList)
+            })
+              .then(res => {
+                if (!res.ok) {
+                  throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+              })
+              .then(result => {
+                if (result.success) {
+                  alert('全部删除成功！');
+                  searchNews();
+                } else {
+                  alert('删除失败：' + (result.error || '未知错误'));
+                }
+              })
+              .catch(err => {
+                console.error('一键删除失败：', err);
+                alert('删除出错');
+              });
+          };
+          resultsContainer.appendChild(bulkDeleteBtn);
+
+          newsList.forEach(news => {
+            const div = document.createElement('div');
+            div.className = 'news-item';
+
+            div.innerHTML = `
+              <p><strong>来源：</strong>${news.source || '未知'}</p>
+              <p><strong>标题：</strong><a href="/news/${news.id}" target="_blank">${news.title || '无标题'}</a></p>
+              <p><strong>时间：</strong>${news.time || '未知时间'}</p>
+              <p><strong>摘要：</strong>${(news.content ? news.content.slice(0, 100) : '无内容')}...</p>
+              <button onclick='deleteNews(${JSON.stringify(news)})'>删除</button>
+            `;
+
+            resultsContainer.appendChild(div);
+          });
+        })
+        .catch(err => {
+          console.error('搜索失败：', err);
+          resultsContainer.innerHTML = '<p style="text-align: center; color: red;">搜索出错，请稍后重试。</p>';
+        });
+    }
+
+    function deleteNews(news) {
+      if (!confirm('确认删除该条新闻？操作不可恢复！')) return;
+
+      fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(news)
+      })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(result => {
+          if (result.success) {
+            alert('删除成功！');
+            searchNews(); 
+          } else {
+            alert('删除失败：' + (result.error || '未知错误'));
+          }
+        })
+        .catch(err => {
+          console.error('删除失败：', err);
+          alert('删除出错，请稍后再试。');
+        });
+    }
+  </script>
+</body>
+</html>

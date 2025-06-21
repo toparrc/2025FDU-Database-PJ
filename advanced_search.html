@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新闻爬虫管理系统 - 高级搜索</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+    
+    .search-container {
+      background: #fff;
+      width: 600px;
+      padding: 25px 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: #007BFF;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    label {
+      width: 130px;
+      font-weight: 600;
+      color: #333;
+      user-select: none;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none; 
+        -moz-appearance: none;    
+        appearance: none;         
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -webkit-appearance: textfield; 
+        -moz-appearance: textfield;    
+        appearance: textfield;         
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .results-container {
+      width: 600px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .news-item {
+      border-bottom: 1px solid #ddd;
+      padding: 12px 0;
+    }
+
+    .news-item:last-child {
+      border-bottom: none;
+    }
+
+    .news-title a {
+      font-weight: bold;
+      font-size: 18px;
+      color: #007BFF;
+      text-decoration: none;
+      user-select: text;
+    }
+
+    .news-title a:hover {
+      text-decoration: underline;
+    }
+
+    .news-source,
+    .news-time {
+      font-size: 12px;
+      color: #666;
+      margin: 4px 0;
+      user-select: text;
+    }
+
+    .news-summary {
+      font-size: 14px;
+      color: #333;
+      user-select: text;
+    }
+
+    .no-results {
+      text-align: center;
+      color: #999;
+      padding: 20px 0;
+      user-select: none;
+    }
+    
+    @media (max-width: 768px) {
+      .search-container, .results-container {
+        width: 95%;
+        padding: 15px;
+      }
+      .row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      label {
+        width: auto;
+        margin-bottom: 5px;
+      }
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+      }
+    }
+
+    .floating-nav {
+      position: fixed;
+      bottom: 40px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      background-color: rgba(255, 255, 255, 0.6); 
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      backdrop-filter: blur(4px); 
+    }
+
+    .floating-nav a {
+      text-decoration: none;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .floating-nav a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="search-container">
+    <h1>高级搜索</h1>
+    <div class="row">
+      <label for="keyword">关键字：</label>
+      <input id="keyword" type="text" placeholder="请输入关键词，例如：疫情、股票..."  />
+    </div>
+
+    <div class="row">
+      <label for="titleExact">标题匹配：</label>
+      <input id="titleExact" type="text" placeholder="不输入则不限" />
+    </div>
+
+    <div class="row">
+      <label for="contentMatch">内容匹配：</label>
+      <input id="contentMatch" type="text" placeholder="不输入则不限" />
+    </div>
+
+    <div class="row">
+      <label for="authorMatch">来源匹配：</label>
+      <input id="authorMatch" type="text" placeholder="不输入则不限" />
+    </div>
+
+    <div class="row">
+      <label for="timeLimit">时间限制（距今--天）：</label>
+      <input id="timeLimit" type="number" min="1" placeholder="默认90天内，例如输入'30'"/>
+    </div>
+
+
+    <div class="row">
+      <label for="maxCount">最大条数：</label>
+      <input id="maxCount" type="number" min="1" placeholder="默认100条" />
+    </div>
+
+    <button onclick="performSearch()">搜索</button>
+  </div>
+
+  <div class="results-container" id="resultsContainer">
+    <div class="no-results">请先输入条件并点击“搜索”</div>
+  </div>
+
+  <div class="floating-nav">
+    <a href="/" title="首页">🏠 首页</a>
+    <a href="/search.html" title="新增">✏️ 新增</a>
+    <a href="/select.html" title="查询">🔍 查询</a>
+    <a href="/delete.html" title="删除">🗑️ 删除</a>
+  </div>
+
+  <script>
+    async function performSearch() {
+      const keyword = document.getElementById('keyword').value.trim();
+      
+
+      const titleExact = document.getElementById('titleExact').value.trim();
+      const contentMatch = document.getElementById('contentMatch').value.trim();
+      const authorMatch = document.getElementById('authorMatch').value.trim();
+      const timeLimit = document.getElementById('timeLimit').value.trim();
+      const maxCount = document.getElementById('maxCount').value.trim();
+
+      const params = {
+        keyword: keyword
+      };
+      if(titleExact) params.titleExact = titleExact;
+      if(contentMatch) params.contentMatch = contentMatch;
+      if(authorMatch) params.authorMatch = authorMatch;
+      params.timeLimit = timeLimit ? Number(timeLimit) : 90; 
+      params.maxCount = maxCount ? Number(maxCount) : 100; 
+
+      const resultsContainer = document.getElementById('resultsContainer');
+      resultsContainer.innerHTML = '<div class="no-results">搜索中，请稍候...</div>';
+      
+      try {
+        const response = await fetch('/api/search', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(params)
+        });
+        if(!response.ok) throw new Error('网络错误: ' + response.status);
+
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          resultsContainer.innerHTML = '<div class="no-results">没有找到匹配的新闻</div>';
+          return;
+        }
+
+        resultsContainer.innerHTML = '';
+        data.forEach(news => {
+          const newsItem = document.createElement('div');
+          newsItem.className = 'news-item';
+
+          const sourceDiv = document.createElement('div');
+          sourceDiv.className = 'news-source';
+          sourceDiv.textContent = '来源：' + (news.author || '未知');
+
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'news-title';
+          const titleLink = document.createElement('a');
+          titleLink.href = `/news/${news.id}`; 
+          titleLink.target = '_blank';
+          titleLink.rel = 'noopener noreferrer';
+          titleLink.textContent = news.title || '无标题';
+          titleDiv.appendChild(titleLink);
+
+          const timeDiv = document.createElement('div');
+          timeDiv.className = 'news-time';
+          timeDiv.textContent = '时间：' + (news.publishTime || '未知');
+
+          const summaryDiv = document.createElement('div');
+          summaryDiv.className = 'news-summary';
+          summaryDiv.textContent = '摘要：' + (news.summary ? news.summary.slice(0, 150) + (news.summary.length > 150 ? '...' : '') : '无摘要');
+
+          newsItem.appendChild(sourceDiv);
+          newsItem.appendChild(titleDiv);
+          newsItem.appendChild(timeDiv);
+          newsItem.appendChild(summaryDiv);
+
+          resultsContainer.appendChild(newsItem);
+        });
+      } catch (error) {
+        resultsContainer.innerHTML = `<div class="no-results">请求出错：${error.message}</div>`;
+      }
+    }
+  </script>
+
+</body>
+</html>
