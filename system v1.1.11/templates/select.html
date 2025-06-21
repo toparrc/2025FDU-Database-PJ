@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新闻查询模块</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f1f1f1;
+    }
+
+    header {
+      background-color: #547AA5;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px 0 0 6px;
+    }
+
+    .search-box button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #547AA5;
+      color: white;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+    }
+
+    .search-box button:hover {
+      background-color: #7B9CC6;
+    }
+
+    .news-item {
+      border-left: 4px solid #7B9CC6;
+      background-color: #fefefe;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .news-item p {
+      margin: 6px 0;
+      color: #333;
+    }
+
+    .news-item a {
+      color: #007BFF;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .news-item a:hover {
+      text-decoration: underline;
+    }
+
+    .floating-nav {
+      position: fixed;
+      bottom: 40px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      background-color: rgba(255, 255, 255, 0.6); 
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      backdrop-filter: blur(4px); 
+    }
+
+    .floating-nav a {
+      text-decoration: none;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .floating-nav a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .search-box {
+        flex-direction: column;
+      }
+
+      .search-box input {
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .search-box button {
+        border-radius: 6px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <header>新闻查询模块</header>
+
+  <div class="container">
+    <div class="search-box">
+      <input type="text" id="searchKeyword" placeholder="请输入关键词或来源..." />
+      <button onclick="queryNews()">搜索</button>
+    </div>
+
+    <div id="resultsContainer">
+      <p style="text-align: center; color: #999;">请先输入关键词并点击“搜索”</p>
+    </div>
+  </div>
+    
+    <div class="floating-nav">
+      <a href="/" title="首页">🏠 首页</a>
+      <a href="/search.html" title="新增">✏️ 新增</a>
+      <a href="/delete.html" title="删除">🗑️ 删除</a>
+      <a href="/advanced_search.html" title="高级查询">📊 高级查询</a>
+    </div>
+
+  <script>
+    function queryNews() {
+      const keyword = document.getElementById('searchKeyword').value.trim();
+      if (!keyword) {
+        alert('请输入关键词或来源');
+        return;
+      }
+
+      const resultsContainer = document.getElementById('resultsContainer');
+      resultsContainer.innerHTML = '<p style="text-align: center; color: #999;">正在搜索...</p>'; 
+
+      fetch('/api/query?keyword=' + encodeURIComponent(keyword))
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(newsList => {
+          resultsContainer.innerHTML = ''; 
+
+          if (newsList.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #999;">未找到相关内容。</p>';
+            return;
+          }
+
+          newsList.forEach(news => {
+            const div = document.createElement('div');
+            div.className = 'news-item';
+
+            const detailUrl = `/news/${news.id}`; 
+            div.innerHTML = `
+              <p><strong>来源：</strong>${news.source || '未知'}</p>
+              <p><strong>标题：</strong><a href="${detailUrl}" target="_blank">${news.title || '无标题'}</a></p>
+              <p><strong>时间：</strong>${news.time || '未知时间'}</p>
+              <p><strong>摘要：</strong>${news.content?.slice(0, 100) || '无内容'}...</p>
+            `;
+
+            resultsContainer.appendChild(div);
+          });
+          
+        })
+
+        .catch(err => {
+          console.error('查询失败：', err);
+          resultsContainer.innerHTML = '<p style="text-align: center; color: red;">查询出错，请稍后再试。</p>';
+        });
+    }
+  </script>
+</body>
+</html>
